@@ -86,7 +86,10 @@ var ActionServer = function (_EventEmitter) {
 
     _this._lastCancelStamp = timeUtils.epoch();
 
+    _this._statusFrequency = 5;
     _this._statusListTimeout = 5;
+
+    _this._started = false;
     return _this;
   }
 
@@ -94,6 +97,12 @@ var ActionServer = function (_EventEmitter) {
     key: 'generateGoalId',
     value: function generateGoalId() {
       return this._asInterface.generateGoalId();
+    }
+  }, {
+    key: 'start',
+    value: function start() {
+      this._started = true;
+      setInterval(this.publishStatus.bind(this), 1000 / this._statusFrequency);
     }
   }, {
     key: 'shutdown',
@@ -108,6 +117,10 @@ var ActionServer = function (_EventEmitter) {
   }, {
     key: '_handleGoal',
     value: function _handleGoal(msg) {
+      if (!this._started) {
+        return;
+      }
+
       var newGoalId = msg.goal_id.id;
 
       var handle = this._getGoalHandle(newGoalId);
@@ -141,6 +154,10 @@ var ActionServer = function (_EventEmitter) {
   }, {
     key: '_handleCancel',
     value: function _handleCancel(msg) {
+      if (!this._started) {
+        return;
+      }
+
       var cancelId = msg.id;
       var cancelStamp = msg.stamp;
       var cancelStampIsZero = timeUtils.isZeroTime(cancelStamp);
